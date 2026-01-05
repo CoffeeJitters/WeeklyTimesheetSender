@@ -2,7 +2,7 @@ import { useState } from 'react'
 import TimeCell from './TimeCell'
 
 const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) => {
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+  const days = ['Friday', 'Saturday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']
   
   const [dailyTimes, setDailyTimes] = useState(() => {
     if (initialData) {
@@ -34,9 +34,14 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
       const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i)
       if (!match) return null
       
-      let hours = parseInt(match[1])
-      const minutes = parseInt(match[2])
+      let hours = parseInt(match[1], 10)
+      const minutes = parseInt(match[2], 10)
       const period = match[3].toUpperCase()
+      
+      // Validate hours and minutes
+      if (isNaN(hours) || isNaN(minutes) || hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+        return null
+      }
       
       if (period === 'PM' && hours !== 12) hours += 12
       if (period === 'AM' && hours === 12) hours = 0
@@ -78,6 +83,17 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
     return Math.max(0, totalMinutes / 60) // Convert to hours
   }
 
+  // Format decimal hours to hours and minutes (e.g., 7.67 -> "7 hrs 40 min")
+  const formatHoursMinutes = (decimalHours) => {
+    if (decimalHours <= 0) return '0 hrs 0 min'
+    const hours = Math.floor(decimalHours)
+    const minutes = Math.round((decimalHours - hours) * 60)
+    if (minutes === 0) {
+      return `${hours} hrs`
+    }
+    return `${hours} hrs ${minutes} min`
+  }
+
   // Calculate grand total
   const grandTotal = days.reduce((sum, day) => sum + calculateDayTotal(day), 0)
   
@@ -86,18 +102,18 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
 
   // Get default time based on field type
   const getDefaultTime = (breakType, subField) => {
-    if (breakType === 'in') return '8:00 AM'
-    if (breakType === 'out') return '5:00 PM'
+    if (breakType === 'in') return '7:00 AM'
+    if (breakType === 'out') return '3:30 PM'
     
     // Break defaults
     if (breakType === 'rest1') {
-      return subField === 'in' ? '10:00 AM' : '10:15 AM'
+      return subField === 'in' ? '9:00 AM' : '9:10 AM'
     }
     if (breakType === 'meal') {
-      return subField === 'in' ? '12:00 PM' : '12:30 PM'
+      return subField === 'in' ? '11:00 AM' : '11:30 AM'
     }
     if (breakType === 'rest2') {
-      return subField === 'in' ? '2:00 PM' : '2:15 PM'
+      return subField === 'in' ? '2:00 PM' : '2:10 PM'
     }
     
     return '12:00 PM'
@@ -153,7 +169,7 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
           </div>
           <div className="flex items-center justify-between md:justify-start gap-2">
             <span className="text-gray-600">Total Hours:</span>
-            <span className="text-green-600 font-medium">{grandTotal.toFixed(2)} hrs</span>
+            <span className="text-green-600 font-medium">{formatHoursMinutes(grandTotal)}</span>
           </div>
           <div className="flex items-center justify-between md:justify-start gap-2">
             <span className="text-gray-600">Total Amount:</span>
@@ -245,7 +261,7 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
                     <td className="px-2 py-3">
                       <input
                         type="text"
-                        value={dayTotal > 0 ? dayTotal.toFixed(2) : '--'}
+                        value={dayTotal > 0 ? formatHoursMinutes(dayTotal) : '--'}
                         readOnly
                         className="w-full px-2 py-2 border border-gray-200 bg-gray-50 rounded text-xs text-center"
                       />
@@ -340,7 +356,7 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
                   <td className="px-3 py-2">
                     <input
                       type="text"
-                      value={dayTotal > 0 ? dayTotal.toFixed(2) : '--'}
+                      value={dayTotal > 0 ? formatHoursMinutes(dayTotal) : '--'}
                       readOnly
                       className="w-full px-2 py-1 border border-gray-200 bg-gray-50 rounded text-xs text-center"
                     />

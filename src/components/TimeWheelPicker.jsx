@@ -46,7 +46,7 @@ const TimeWheelPicker = ({ value, onChange, onClose, defaultTime = null }) => {
         }
       }
       if (minutesRef.current) {
-        const minuteIndex = [0, 15, 30, 45].indexOf(parsedMinutes)
+        const minuteIndex = [0, 10, 20, 30, 40, 50].indexOf(parsedMinutes)
         const minuteElement = minutesRef.current.children[minuteIndex]
         if (minuteElement) {
           minuteElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -91,27 +91,30 @@ const TimeWheelPicker = ({ value, onChange, onClose, defaultTime = null }) => {
   }
 
   const hourOptions = Array.from({ length: 12 }, (_, i) => i + 1)
-  const minuteOptions = [0, 15, 30, 45]
+  const minuteOptions = [0, 10, 20, 30, 40, 50]
   const ampmOptions = ['AM', 'PM']
 
   return (
     <>
       {/* Mobile backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+        className="fixed inset-0 bg-black bg-opacity-50 z-[9998] md:hidden"
         onClick={onClose}
+        ref={() => {}}
       />
       
       {/* Picker container */}
       <div
-        ref={popoverRef}
-        className="fixed md:absolute bottom-0 md:bottom-auto left-0 md:left-auto right-0 md:right-auto md:rounded-lg bg-white border-t md:border border-gray-300 shadow-lg md:shadow-lg p-4 md:p-4 z-50 md:z-auto"
+        ref={(el) => {
+          popoverRef.current = el;
+        }}
+        className="fixed md:absolute top-0 md:top-auto left-0 md:left-auto right-0 md:right-auto md:rounded-lg bg-white border-b md:border border-gray-300 shadow-lg md:shadow-lg p-4 md:p-4 z-[9999] md:z-50"
         style={{ 
           minWidth: '240px',
-          borderTopLeftRadius: '1rem',
-          borderTopRightRadius: '1rem',
-          borderBottomLeftRadius: '0',
-          borderBottomRightRadius: '0',
+          borderTopLeftRadius: '0',
+          borderTopRightRadius: '0',
+          borderBottomLeftRadius: '1rem',
+          borderBottomRightRadius: '1rem',
         }}
       >
         <div className="flex items-center justify-between mb-3">

@@ -46,26 +46,26 @@ function App() {
     return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
   }
 
-  const getClosestFriday = () => {
+  const getClosestThursday = () => {
     const today = new Date()
-    const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+    const dayOfWeek = today.getDay() // 0 = Sunday, 1 = Monday, ..., 4 = Thursday, 5 = Friday, 6 = Saturday
     
     let daysToAdd = 0
-    if (dayOfWeek <= 5) {
-      // Sunday through Friday: add days to get to Friday
-      daysToAdd = 5 - dayOfWeek
+    if (dayOfWeek <= 4) {
+      // Sunday through Thursday: add days to get to Thursday
+      daysToAdd = 4 - dayOfWeek
     } else {
-      // Saturday: add 6 days to get to next Friday
-      daysToAdd = 6
+      // Friday or Saturday: add days to get to next Thursday
+      daysToAdd = 4 + (7 - dayOfWeek)
     }
     
-    const friday = new Date(today)
-    friday.setDate(today.getDate() + daysToAdd)
+    const thursday = new Date(today)
+    thursday.setDate(today.getDate() + daysToAdd)
     
     // Return in YYYY-MM-DD format for HTML date input
-    const year = friday.getFullYear()
-    const month = String(friday.getMonth() + 1).padStart(2, '0')
-    const day = String(friday.getDate()).padStart(2, '0')
+    const year = thursday.getFullYear()
+    const month = String(thursday.getMonth() + 1).padStart(2, '0')
+    const day = String(thursday.getDate()).padStart(2, '0')
     return `${year}-${month}-${day}`
   }
   
@@ -74,7 +74,7 @@ function App() {
     employeeName: '',
     employeeId: '',
     foremanName: '',
-    weekEnding: getClosestFriday()
+    weekEnding: getClosestThursday()
   })
 
   const handleNewEntry = () => {
@@ -83,7 +83,7 @@ function App() {
       employeeName: '',
       employeeId: '',
       foremanName: '',
-      weekEnding: getClosestFriday()
+      weekEnding: getClosestThursday()
     })
   }
 
@@ -250,7 +250,17 @@ function App() {
       
       // Total Hours - right align label so colon aligns with Total Price colon
       doc.text('Total Hours:', totalsLabelX, yPos, { align: 'right' })
-      doc.text(totalHours.toFixed(2) + ' hrs', totalsValueX, yPos)
+      // Format hours and minutes for line items
+      const formatHoursMinutes = (decimalHours) => {
+        if (decimalHours <= 0) return '0 hrs 0 min'
+        const hours = Math.floor(decimalHours)
+        const minutes = Math.round((decimalHours - hours) * 60)
+        if (minutes === 0) {
+          return `${hours} hrs`
+        }
+        return `${hours} hrs ${minutes} min`
+      }
+      doc.text(formatHoursMinutes(totalHours), totalsValueX, yPos)
       yPos += 6
       
       // Total Price - right align label so colon aligns with Total Hours colon
@@ -272,6 +282,17 @@ function App() {
       doc.text('Daily Time Grid', tableStartX, yPos)
       yPos += 8
       
+      // Helper function to format decimal hours to hours and minutes
+      const formatHoursMinutes = (decimalHours) => {
+        if (decimalHours <= 0) return '0 hrs 0 min'
+        const hours = Math.floor(decimalHours)
+        const minutes = Math.round((decimalHours - hours) * 60)
+        if (minutes === 0) {
+          return `${hours} hrs`
+        }
+        return `${hours} hrs ${minutes} min`
+      }
+
       // Helper function to calculate day total (same logic as DailyTimeGrid component)
       const calculateDayTotal = (dayData) => {
         if (!dayData.in || !dayData.out) return 0
@@ -281,9 +302,14 @@ function App() {
           const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i)
           if (!match) return null
           
-          let hours = parseInt(match[1])
-          const minutes = parseInt(match[2])
+          let hours = parseInt(match[1], 10)
+          const minutes = parseInt(match[2], 10)
           const period = match[3].toUpperCase()
+          
+          // Validate hours and minutes
+          if (isNaN(hours) || isNaN(minutes) || hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+            return null
+          }
           
           if (period === 'PM' && hours !== 12) hours += 12
           if (period === 'AM' && hours === 12) hours = 0
@@ -342,7 +368,7 @@ function App() {
       yPos = timeHeaderY + 5
       
       // Table rows
-      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+      const days = ['Friday', 'Saturday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']
       doc.setFont(undefined, 'normal')
       doc.setFontSize(7)
       
@@ -364,7 +390,7 @@ function App() {
         doc.text((dayData.rest2?.in || '--').substring(0, 7), timeColPositions[6], yPos)
         doc.text((dayData.rest2?.out || '--').substring(0, 7), timeColPositions[7], yPos)
         doc.text((dayData.out || '--').substring(0, 7), timeColPositions[8], yPos)
-        doc.text(dayTotal > 0 ? dayTotal.toFixed(2) : '--', timeColPositions[9], yPos)
+        doc.text(dayTotal > 0 ? formatHoursMinutes(dayTotal) : '--', timeColPositions[9], yPos)
         
         doc.line(tableStartX, yPos + 3, tableEndX, yPos + 3)
         yPos += 5
@@ -389,7 +415,7 @@ function App() {
       
       // Total Hours - right align label so colon aligns with Total Amount colon
       doc.text('Total Hours:', totalsLabelX, yPos, { align: 'right' })
-      doc.text(grandTotal.toFixed(2) + ' hrs', totalsValueX, yPos)
+      doc.text(formatHoursMinutes(grandTotal), totalsValueX, yPos)
       yPos += 6
       
       // Total Amount - right align label so colon aligns with Total Hours colon
@@ -467,10 +493,15 @@ function App() {
     const updatedItems = selectedTimesheet.lineItems.map(item => {
       if (item.id === itemId) {
         const updated = { ...item, [field]: value }
-        // Calculate total if hrs and price are numeric
-        const hrs = parseFloat(updated.hrs) || 0
-        const price = parseFloat(updated.price) || 0
-        updated.total = hrs * price
+        // Only auto-calculate total if hrs or price changed, not if total is being manually edited
+        if (field === 'hrs' || field === 'price') {
+          const hrs = parseFloat(updated.hrs) || 0
+          const price = parseFloat(updated.price) || 0
+          updated.total = hrs * price
+        } else if (field === 'total') {
+          // Parse the manually entered total value
+          updated.total = parseFloat(value) || 0
+        }
         return updated
       }
       return item
@@ -758,7 +789,7 @@ function App() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Week Ending</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Week Ending (Thursday)</label>
                 <div className="relative">
                   <input
                     type="date"
@@ -793,6 +824,17 @@ function App() {
 
   // State C: Detail View
   if (currentView === 'detail' && selectedTimesheet) {
+    // Format decimal hours to hours and minutes
+    const formatHoursMinutes = (decimalHours) => {
+      if (decimalHours <= 0) return '0 hrs 0 min'
+      const hours = Math.floor(decimalHours)
+      const minutes = Math.round((decimalHours - hours) * 60)
+      if (minutes === 0) {
+        return `${hours} hrs`
+      }
+      return `${hours} hrs ${minutes} min`
+    }
+
     const totalHours = selectedTimesheet.lineItems.reduce((sum, item) => {
       const hrs = parseFloat(item.hrs) || 0
       return sum + hrs
@@ -936,9 +978,10 @@ function App() {
                           <label className="block text-xs font-medium text-gray-700 mb-1">Total</label>
                           <input
                             type="text"
-                            value={item.total.toFixed(2)}
-                            readOnly
-                            className="w-full px-3 py-2.5 border border-gray-200 bg-gray-50 rounded text-sm"
+                            value={item.total !== undefined && item.total !== null ? item.total : ''}
+                            onChange={(e) => handleUpdateLineItem(item.id, 'total', e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="0.00"
                           />
                         </div>
                       </div>
@@ -1032,9 +1075,10 @@ function App() {
                         <td className="px-3 py-2">
                           <input
                             type="text"
-                            value={item.total.toFixed(2)}
-                            readOnly
-                            className="w-full px-2 py-1 border border-gray-200 bg-gray-50 rounded text-xs"
+                            value={item.total !== undefined && item.total !== null ? item.total : ''}
+                            onChange={(e) => handleUpdateLineItem(item.id, 'total', e.target.value)}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="0.00"
                           />
                         </td>
                         <td className="px-3 py-2">
@@ -1062,7 +1106,7 @@ function App() {
                 <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-6 text-sm w-full md:w-auto">
                   <div className="flex items-center justify-between md:justify-start gap-2">
                     <span className="text-gray-600">Weekly Hours:</span>
-                    <span className="text-gray-900 font-medium">{totalHours.toFixed(2)} hrs</span>
+                    <span className="text-gray-900 font-medium">{formatHoursMinutes(totalHours)}</span>
                   </div>
                   <div className="flex items-center justify-between md:justify-start gap-2">
                     <span className="text-gray-600">Total Price:</span>
