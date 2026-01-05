@@ -80,6 +80,9 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
 
   // Calculate grand total
   const grandTotal = days.reduce((sum, day) => sum + calculateDayTotal(day), 0)
+  
+  // Calculate total dollar amount
+  const totalAmount = grandTotal * ratePerHour
 
   // Get default time based on field type
   const getDefaultTime = (breakType, subField) => {
@@ -134,10 +137,10 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
 
   return (
     <div className="mt-6 border-t border-gray-200 pt-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Daily Time Grid</h2>
-        <div className="flex items-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-6 text-sm">
+          <div className="flex items-center justify-between md:justify-start gap-2">
             <label className="text-gray-600">Rate per hour:</label>
             <input
               type="number"
@@ -145,17 +148,118 @@ const DailyTimeGrid = ({ weekEnding, onDataChange, initialData, initialRate }) =
               onChange={(e) => handleRateChange(e.target.value)}
               step="0.01"
               min="0"
-              className="w-20 px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-24 md:w-20 px-3 py-2 md:py-1 border border-gray-300 rounded text-sm md:text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gray-600">Grand Total:</span>
+          <div className="flex items-center justify-between md:justify-start gap-2">
+            <span className="text-gray-600">Total Hours:</span>
             <span className="text-green-600 font-medium">{grandTotal.toFixed(2)} hrs</span>
+          </div>
+          <div className="flex items-center justify-between md:justify-start gap-2">
+            <span className="text-gray-600">Total Amount:</span>
+            <span className="text-green-600 font-medium">${totalAmount.toFixed(2)}</span>
           </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Mobile: Horizontal scroll with larger cells */}
+      <div className="block md:hidden overflow-x-auto -mx-4 px-4">
+        <div className="min-w-[800px]">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[80px]">Day</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">In</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">B1 In</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">B1 Out</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">Meal In</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">Meal Out</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">B2 In</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">B2 Out</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[100px]">Out</th>
+                <th className="px-2 py-2.5 text-left text-xs font-medium text-gray-500 uppercase min-w-[80px]">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {days.map((day) => {
+                const dayTotal = calculateDayTotal(day)
+                return (
+                  <tr key={day} className="hover:bg-gray-50">
+                    <td className="px-2 py-3 font-medium text-gray-900">{day.substring(0, 3)}</td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].in}
+                        onChange={(value) => handleTimeChange(day, 'in', null, value)}
+                        defaultTime={getDefaultTime('in', null)}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].rest1.in}
+                        onChange={(value) => handleTimeChange(day, 'rest1', 'in', value)}
+                        defaultTime={getDefaultTime('rest1', 'in')}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].rest1.out}
+                        onChange={(value) => handleTimeChange(day, 'rest1', 'out', value)}
+                        defaultTime={getDefaultTime('rest1', 'out')}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].meal.in}
+                        onChange={(value) => handleTimeChange(day, 'meal', 'in', value)}
+                        defaultTime={getDefaultTime('meal', 'in')}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].meal.out}
+                        onChange={(value) => handleTimeChange(day, 'meal', 'out', value)}
+                        defaultTime={getDefaultTime('meal', 'out')}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].rest2.in}
+                        onChange={(value) => handleTimeChange(day, 'rest2', 'in', value)}
+                        defaultTime={getDefaultTime('rest2', 'in')}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].rest2.out}
+                        onChange={(value) => handleTimeChange(day, 'rest2', 'out', value)}
+                        defaultTime={getDefaultTime('rest2', 'out')}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <TimeCell
+                        value={dailyTimes[day].out}
+                        onChange={(value) => handleTimeChange(day, 'out', null, value)}
+                        defaultTime={getDefaultTime('out', null)}
+                      />
+                    </td>
+                    <td className="px-2 py-3">
+                      <input
+                        type="text"
+                        value={dayTotal > 0 ? dayTotal.toFixed(2) : '--'}
+                        readOnly
+                        className="w-full px-2 py-2 border border-gray-200 bg-gray-50 rounded text-xs text-center"
+                      />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Desktop: Normal table */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>

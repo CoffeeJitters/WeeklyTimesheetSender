@@ -243,18 +243,19 @@ function App() {
       
       doc.setFont(undefined, 'bold')
       doc.setFontSize(10)
-      // Align both labels and values in the same column position
-      const totalsLabelX = colPositions[5] - 30
-      const totalsValueX = colPositions[5]
+      // Align labels to a consistent position from right edge for both sections
+      // Use right alignment for labels so colons align perfectly
+      const totalsLabelX = tableEndX - 50
+      const totalsValueX = tableEndX - 15
       
-      // Total Hours
-      doc.text('Total Hours:', totalsLabelX, yPos)
+      // Total Hours - right align label so colon aligns with Total Price colon
+      doc.text('Total Hours:', totalsLabelX, yPos, { align: 'right' })
       doc.text(totalHours.toFixed(2) + ' hrs', totalsValueX, yPos)
       yPos += 6
       
-      // Total Price (under Total Hours)
-      doc.text('Total Price:', totalsLabelX, yPos)
-      doc.text(`$${totalAmount.toFixed(2)}`, totalsValueX, yPos)
+      // Total Price - right align label so colon aligns with Total Hours colon
+      doc.text('Total Price:', totalsLabelX, yPos, { align: 'right' })
+      doc.text('$' + totalAmount.toFixed(2), totalsValueX, yPos)
       yPos += 15
     }
     
@@ -369,18 +370,32 @@ function App() {
         yPos += 5
       })
       
-      // Grand Total
+      // Total Hours and Total Amount
       const grandTotal = days.reduce((sum, day) => {
         return sum + calculateDayTotal(selectedTimesheet.dailyTimeGrid[day] || {})
       }, 0)
+      
+      const ratePerHour = selectedTimesheet.ratePerHour || 15.00
+      const totalAmount = grandTotal * ratePerHour
       
       yPos += 2
       doc.line(tableStartX, yPos, tableEndX, yPos)
       yPos += 5
       doc.setFont(undefined, 'bold')
       doc.setFontSize(9)
-      doc.text('Grand Total:', timeColPositions[9] - 20, yPos)
-      doc.text(grandTotal.toFixed(2) + ' hrs', timeColPositions[9], yPos)
+      // Use same alignment as line items section to align colons
+      const totalsLabelX = tableEndX - 50
+      const totalsValueX = tableEndX - 15
+      
+      // Total Hours - right align label so colon aligns with Total Amount colon
+      doc.text('Total Hours:', totalsLabelX, yPos, { align: 'right' })
+      doc.text(grandTotal.toFixed(2) + ' hrs', totalsValueX, yPos)
+      yPos += 6
+      
+      // Total Amount - right align label so colon aligns with Total Hours colon
+      doc.text('Total Amount:', totalsLabelX, yPos, { align: 'right' })
+      const amountText = '$' + totalAmount.toFixed(2)
+      doc.text(amountText, totalsValueX, yPos)
       yPos += 10
     }
     
@@ -505,24 +520,24 @@ function App() {
 
   // Top bar component (always visible)
   const TopBar = () => (
-    <div className="bg-slate-900 text-white px-6 py-3 flex items-center justify-between">
-      <div className="text-lg font-semibold">Weekly Timesheet Sender</div>
-      <div className="flex items-center gap-2">
+    <div className="bg-slate-900 text-white px-4 md:px-6 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div className="text-base md:text-lg font-semibold">Weekly Timesheet Sender</div>
+      <div className="flex items-center gap-2 w-full md:w-auto">
         {currentView === 'detail' && (
           <button
             onClick={() => setCurrentView('list')}
-            className="px-3 py-1.5 text-sm bg-white text-slate-900 rounded hover:bg-gray-100"
+            className="px-4 py-2.5 md:px-3 md:py-1.5 text-sm bg-white text-slate-900 rounded hover:bg-gray-100 min-h-[44px] md:min-h-0 flex-1 md:flex-none"
           >
             Back to Dashboard
           </button>
         )}
         <button
           onClick={handleNewEntry}
-          className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-4 py-2.5 md:px-4 md:py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 min-h-[44px] md:min-h-0 flex-1 md:flex-none"
         >
           New Entry
         </button>
-        <button className="p-1.5 hover:bg-slate-800 rounded">
+        <button className="p-2.5 md:p-1.5 hover:bg-slate-800 rounded min-h-[44px] md:min-h-0 min-w-[44px] md:min-w-0">
           <MoreVertical size={18} />
         </button>
       </div>
@@ -534,14 +549,14 @@ function App() {
     return (
       <div className="min-h-screen bg-gray-50">
         <TopBar />
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h1 className="text-2xl font-semibold text-gray-900">Timesheets</h1>
-              <div className="relative">
+            <div className="px-4 md:px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+              <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Timesheets</h1>
+              <div className="relative w-full md:w-auto">
                 <button
                   onClick={() => setShowImportDropdown(!showImportDropdown)}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-2"
+                  className="w-full md:w-auto px-4 py-2.5 md:py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center md:justify-start gap-2 min-h-[44px] md:min-h-0"
                 >
                   Import CSV
                   <ChevronDown size={16} />
@@ -555,13 +570,13 @@ function App() {
                     <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded shadow-lg z-20">
                       <button
                         onClick={() => setShowImportDropdown(false)}
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                        className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 min-h-[44px]"
                       >
                         Upload CSV...
                       </button>
                       <button
                         onClick={() => setShowImportDropdown(false)}
-                        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                        className="block w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 min-h-[44px]"
                       >
                         Download template
                       </button>
@@ -571,7 +586,53 @@ function App() {
               </div>
             </div>
             
-            <div className="overflow-x-auto">
+            {/* Mobile Card Layout */}
+            <div className="block md:hidden divide-y divide-gray-200">
+              {timesheets.length === 0 ? (
+                <div className="px-4 py-8 text-center text-gray-500">No timesheets</div>
+              ) : (
+                timesheets.map((timesheet) => (
+                  <div key={timesheet.id} className="px-4 py-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="text-base font-medium text-gray-900 mb-1">{timesheet.employeeName}</div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div>Week Ending: {formatDate(timesheet.weekEnding)}</div>
+                          <div>Last Edited: {timesheet.lastEdited}</div>
+                        </div>
+                      </div>
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(timesheet.status)}`}>
+                        {timesheet.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleEdit(timesheet)}
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center gap-1.5 min-h-[44px]"
+                      >
+                        <Edit size={16} />
+                        Edit
+                      </button>
+                      <button className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 min-h-[44px] min-w-[60px]">
+                        PDF
+                      </button>
+                      <button className="p-2 hover:bg-gray-100 rounded min-h-[44px] min-w-[44px] flex items-center justify-center">
+                        <Copy size={16} className="text-gray-600" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTimesheet(timesheet.id)}
+                        className="p-2 hover:bg-gray-100 rounded min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      >
+                        <Trash2 size={16} className="text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table Layout */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -622,16 +683,16 @@ function App() {
               </table>
             </div>
             
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-3">
               <div className="text-sm text-gray-600">
                 {timesheets.length > 0 ? `1 - ${timesheets.length} of ${timesheets.length}` : '0 timesheets'}
               </div>
               <div className="flex items-center gap-2">
-                <button className="p-1 hover:bg-gray-100 rounded disabled:opacity-50" disabled>
+                <button className="p-2 md:p-1 hover:bg-gray-100 rounded disabled:opacity-50 min-h-[44px] md:min-h-0 min-w-[44px] md:min-w-0 flex items-center justify-center" disabled>
                   <ChevronLeft size={16} />
                 </button>
-                <button className="px-2 py-1 text-sm bg-blue-600 text-white rounded">1</button>
-                <button className="p-1 hover:bg-gray-100 rounded disabled:opacity-50" disabled>
+                <button className="px-3 py-2 md:px-2 md:py-1 text-sm bg-blue-600 text-white rounded min-h-[44px] md:min-h-0">1</button>
+                <button className="p-2 md:p-1 hover:bg-gray-100 rounded disabled:opacity-50 min-h-[44px] md:min-h-0 min-w-[44px] md:min-w-0 flex items-center justify-center" disabled>
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -648,78 +709,78 @@ function App() {
       <div className="min-h-screen bg-gray-50">
         <TopBar />
         <div 
-          className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 md:items-center"
           onClick={() => setCurrentView('list')}
         >
           <div 
-            className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4"
+            className="bg-white w-full h-full md:h-auto md:rounded-lg shadow-2xl md:w-full md:max-w-md md:mx-4 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Create New Timesheet</h2>
+            <div className="px-4 md:px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-900">Create New Timesheet</h2>
               <button
                 onClick={() => setCurrentView('list')}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-2 hover:bg-gray-100 rounded min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:p-1 flex items-center justify-center"
               >
                 <X size={20} />
               </button>
             </div>
             
-            <div className="px-6 py-4 space-y-4">
+            <div className="px-4 md:px-6 py-4 md:py-4 space-y-4 md:space-y-4 flex-1 overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Employee Name</label>
                 <input
                   type="text"
                   value={formData.employeeName}
                   onChange={(e) => setFormData({ ...formData, employeeName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] md:min-h-0"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID (optional)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID (optional)</label>
                 <input
                   type="text"
                   value={formData.employeeId}
                   onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] md:min-h-0"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Foreman Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Foreman Name</label>
                 <input
                   type="text"
                   value={formData.foremanName}
                   onChange={(e) => setFormData({ ...formData, foremanName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] md:min-h-0"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Week Ending</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Week Ending</label>
                 <div className="relative">
                   <input
                     type="date"
                     value={formData.weekEnding}
                     onChange={(e) => setFormData({ ...formData, weekEnding: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                    className="w-full px-4 py-3 md:px-3 md:py-2 border border-gray-300 rounded text-base md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10 min-h-[44px] md:min-h-0"
                   />
-                  <Calendar size={18} className="absolute right-3 top-2.5 text-gray-400 pointer-events-none" />
+                  <Calendar size={18} className="absolute right-3 top-3 md:top-2.5 text-gray-400 pointer-events-none" />
                 </div>
               </div>
             </div>
             
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col md:flex-row justify-end gap-3 md:gap-3">
               <button
                 onClick={() => setCurrentView('list')}
-                className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                className="w-full md:w-auto px-4 py-3 md:py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 min-h-[44px] md:min-h-0"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateTimesheet}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="w-full md:w-auto px-4 py-3 md:py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 min-h-[44px] md:min-h-0"
               >
                 Create Timesheet
               </button>
@@ -744,37 +805,37 @@ function App() {
     return (
       <div className="min-h-screen bg-gray-50">
         <TopBar />
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-start justify-between">
+            <div className="px-4 md:px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <button
                       onClick={() => setCurrentView('list')}
-                      className="text-gray-600 hover:text-gray-900"
+                      className="text-gray-600 hover:text-gray-900 p-1 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
                     >
                       <ChevronLeft size={18} />
                     </button>
-                    <h1 className="text-2xl font-semibold text-gray-900">Timesheet for {selectedTimesheet.employeeName}</h1>
+                    <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Timesheet for {selectedTimesheet.employeeName}</h1>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 ml-6">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 text-sm text-gray-600 ml-6 md:ml-6">
                     <span>Foreman: {selectedTimesheet.foremanName || 'N/A'}</span>
                     <span>Employee ID: {selectedTimesheet.employeeId || 'N/A'}</span>
                   </div>
                 </div>
-                <div className="text-right flex flex-col items-end gap-3">
+                <div className="flex flex-col md:text-right md:items-end gap-3">
                   <div className="text-sm text-gray-600">Week Ending: {formatDate(selectedTimesheet.weekEnding)}</div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
                     <button
                       onClick={handleSaveDraft}
-                      className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+                      className="w-full md:w-auto px-4 py-2.5 md:py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700 min-h-[44px] md:min-h-0"
                     >
                       Save Draft
                     </button>
                     <button
                       onClick={handleExportPDF}
-                      className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
+                      className="w-full md:w-auto px-4 py-2.5 md:py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-2 min-h-[44px] md:min-h-0"
                     >
                       Export PDF
                       <Settings size={14} />
@@ -784,9 +845,113 @@ function App() {
               </div>
             </div>
             
-            <div className="px-6 py-4">
+            <div className="px-4 md:px-6 py-4">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Line Items</h2>
-              <div className="overflow-x-auto">
+              
+              {/* Mobile Card Layout */}
+              <div className="block md:hidden space-y-4">
+                {selectedTimesheet.lineItems.map((item) => (
+                  <div key={item.id} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium text-gray-700">Line Item</h3>
+                      <button
+                        onClick={() => handleRemoveLineItem(item.id)}
+                        className="text-red-600 hover:text-red-800 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Job Name</label>
+                        <input
+                          type="text"
+                          value={item.jobName || ''}
+                          onChange={(e) => handleUpdateLineItem(item.id, 'jobName', e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Job #</label>
+                          <input
+                            type="text"
+                            value={item.jobNumber || ''}
+                            onChange={(e) => handleUpdateLineItem(item.id, 'jobNumber', e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Cost Code</label>
+                          <select
+                            value={item.jobCode || ''}
+                            onChange={(e) => handleUpdateLineItem(item.id, 'jobCode', e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="">Select...</option>
+                            {jobCodes.map(code => (
+                              <option key={code} value={code}>{code}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Operation</label>
+                        <input
+                          type="text"
+                          value={item.operation || ''}
+                          onChange={(e) => handleUpdateLineItem(item.id, 'operation', e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Lot #s</label>
+                        <input
+                          type="text"
+                          value={item.lotNumbers || ''}
+                          onChange={(e) => handleUpdateLineItem(item.id, 'lotNumbers', e.target.value)}
+                          className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Hrs.</label>
+                          <input
+                            type="text"
+                            value={item.hrs || ''}
+                            onChange={(e) => handleUpdateLineItem(item.id, 'hrs', e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Price</label>
+                          <input
+                            type="text"
+                            value={item.price || ''}
+                            onChange={(e) => handleUpdateLineItem(item.id, 'price', e.target.value)}
+                            className="w-full px-3 py-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Total</label>
+                          <input
+                            type="text"
+                            value={item.total.toFixed(2)}
+                            readOnly
+                            className="w-full px-3 py-2.5 border border-gray-200 bg-gray-50 rounded text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {selectedTimesheet.lineItems.length === 0 && (
+                  <div className="text-center py-8 text-gray-500 text-sm">No line items yet</div>
+                )}
+              </div>
+
+              {/* Desktop Table Layout */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -886,20 +1051,20 @@ function App() {
                 </table>
               </div>
               
-              <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-3">
+              <div className="mt-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 border-t border-gray-200 pt-3">
                 <button
                   onClick={handleAddLineItem}
-                  className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                  className="w-full md:w-auto px-4 py-2.5 md:py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 flex items-center justify-center gap-2 text-gray-700 min-h-[44px] md:min-h-0"
                 >
-                  <Plus size={14} />
+                  <Plus size={16} />
                   Add Line Item
                 </button>
-                <div className="flex items-center gap-6 text-sm">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-6 text-sm w-full md:w-auto">
+                  <div className="flex items-center justify-between md:justify-start gap-2">
                     <span className="text-gray-600">Weekly Hours:</span>
                     <span className="text-gray-900 font-medium">{totalHours.toFixed(2)} hrs</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between md:justify-start gap-2">
                     <span className="text-gray-600">Total Price:</span>
                     <span className="text-green-600 font-medium">${totalAmount.toFixed(2)}</span>
                   </div>
@@ -923,18 +1088,21 @@ function App() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Signatures</h2>
                 
                 {/* Foreman Signature Section */}
-                <div className="flex gap-4 items-start justify-center">
-                  <div className="flex flex-col items-center flex-1 max-w-md">
+                {/* Mobile: Stacked layout with signature on top, date centered below */}
+                <div className="flex flex-col md:flex-row gap-4 md:gap-4 items-center md:items-start md:justify-center">
+                  <div className="flex flex-col items-center w-full md:flex-1 md:max-w-md">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Foreman Signature
                     </label>
                     <p className="text-xs text-gray-500 mb-2 text-center">Draw your signature using your mouse or touch screen</p>
-                    <SignaturePad
-                      value={selectedTimesheet.foremanSignature || ''}
-                      onChange={(dataURL) => setSelectedTimesheet({ ...selectedTimesheet, foremanSignature: dataURL })}
-                    />
+                    <div className="w-full">
+                      <SignaturePad
+                        value={selectedTimesheet.foremanSignature || ''}
+                        onChange={(dataURL) => setSelectedTimesheet({ ...selectedTimesheet, foremanSignature: dataURL })}
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center w-40 flex-shrink-0">
+                  <div className="flex flex-col items-center w-full md:w-40 md:flex-shrink-0">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Date
                     </label>
@@ -942,7 +1110,7 @@ function App() {
                       type="date"
                       value={selectedTimesheet.signatureDate || new Date().toISOString().split('T')[0]}
                       onChange={(e) => setSelectedTimesheet({ ...selectedTimesheet, signatureDate: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full max-w-xs md:max-w-none px-3 py-2.5 md:py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] md:min-h-0"
                     />
                   </div>
                 </div>

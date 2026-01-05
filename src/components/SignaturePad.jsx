@@ -9,32 +9,69 @@ const SignaturePad = ({ value, onChange }) => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ctx = canvas.getContext('2d')
-    ctx.strokeStyle = '#000000'
-    ctx.lineWidth = 2
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-
-    // Load existing signature if value exists, otherwise clear
-    if (value) {
-      const img = new Image()
-      img.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(img, 0, 0)
-        setHasSignature(true)
+    // Set responsive canvas size
+    const updateCanvasSize = () => {
+      const container = canvas.parentElement
+      if (!container) return
+      
+      const containerWidth = container.clientWidth
+      const isMobile = window.innerWidth < 768
+      
+      // Mobile: use full width, desktop: max 400px
+      const width = isMobile ? containerWidth : Math.min(400, containerWidth)
+      const height = isMobile ? 200 : 150
+      
+      // Set display size
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
+      
+      // Set actual canvas resolution (for crisp rendering)
+      const scale = window.devicePixelRatio || 1
+      canvas.width = width * scale
+      canvas.height = height * scale
+      
+      // Scale context to handle device pixel ratio
+      const ctx = canvas.getContext('2d')
+      ctx.scale(scale, scale)
+      
+      // Re-apply styles
+      ctx.strokeStyle = '#000000'
+      ctx.lineWidth = isMobile ? 3 : 2 // Thicker lines on mobile for better visibility
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      
+      // Reload existing signature if present
+      if (value) {
+        const img = new Image()
+        img.onload = () => {
+          ctx.clearRect(0, 0, width, height)
+          ctx.drawImage(img, 0, 0, width, height)
+          setHasSignature(true)
+        }
+        img.onerror = () => {
+          ctx.clearRect(0, 0, width, height)
+          setHasSignature(false)
+        }
+        img.src = value
+      } else {
+        ctx.clearRect(0, 0, width, height)
+        setHasSignature(false)
       }
-      img.src = value
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      setHasSignature(false)
+    }
+
+    updateCanvasSize()
+    window.addEventListener('resize', updateCanvasSize)
+    
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize)
     }
   }, [value])
 
   const getCoordinates = (e) => {
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+    const scaleX = canvas.width / (rect.width * (window.devicePixelRatio || 1))
+    const scaleY = canvas.height / (rect.height * (window.devicePixelRatio || 1))
 
     if (e.touches && e.touches.length > 0) {
       return {
@@ -93,11 +130,9 @@ const SignaturePad = ({ value, onChange }) => {
   }
 
   return (
-    <div className="signature-pad-container">
+    <div className="signature-pad-container w-full">
       <canvas
         ref={canvasRef}
-        width={400}
-        height={150}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}
@@ -106,13 +141,13 @@ const SignaturePad = ({ value, onChange }) => {
         onTouchMove={draw}
         onTouchEnd={stopDrawing}
         className="border border-gray-300 rounded cursor-crosshair bg-white w-full max-w-md"
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'none', display: 'block' }}
       />
       <div className="mt-2 flex justify-end">
         <button
           type="button"
           onClick={clearSignature}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
+          className="px-4 py-2.5 md:px-3 md:py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700 min-h-[44px] md:min-h-0"
         >
           Clear
         </button>

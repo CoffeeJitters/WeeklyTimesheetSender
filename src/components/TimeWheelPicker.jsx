@@ -95,113 +95,128 @@ const TimeWheelPicker = ({ value, onChange, onClose, defaultTime = null }) => {
   const ampmOptions = ['AM', 'PM']
 
   return (
-    <div
-      ref={popoverRef}
-      className="bg-white border border-gray-300 rounded-lg shadow-lg p-4"
-      style={{ minWidth: '240px' }}
-    >
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-900">Select Time</h3>
-        <button
-          onClick={onClose}
-          className="p-1 hover:bg-gray-100 rounded"
-        >
-          <X size={16} className="text-gray-600" />
-        </button>
-      </div>
+    <>
+      {/* Mobile backdrop */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+        onClick={onClose}
+      />
       
-      <div className="flex items-center gap-2 mb-4">
-        {/* Hours Wheel */}
-        <div className="flex-1">
-          <div className="text-xs text-gray-500 mb-1 text-center">Hours</div>
-          <div 
-            ref={hoursRef}
-            className="border border-gray-300 rounded h-32 overflow-y-auto scroll-smooth" 
-            style={{ scrollSnapType: 'y mandatory' }}
+      {/* Picker container */}
+      <div
+        ref={popoverRef}
+        className="fixed md:absolute bottom-0 md:bottom-auto left-0 md:left-auto right-0 md:right-auto md:rounded-lg bg-white border-t md:border border-gray-300 shadow-lg md:shadow-lg p-4 md:p-4 z-50 md:z-auto"
+        style={{ 
+          minWidth: '240px',
+          borderTopLeftRadius: '1rem',
+          borderTopRightRadius: '1rem',
+          borderBottomLeftRadius: '0',
+          borderBottomRightRadius: '0',
+        }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base md:text-sm font-medium text-gray-900">Select Time</h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0 md:p-1 flex items-center justify-center"
           >
-            {hourOptions.map((hour) => (
-              <div
-                key={hour}
-                onClick={() => setHours(hour)}
-                className={`px-3 py-2 text-center cursor-pointer ${
-                  hours === hour
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'hover:bg-gray-50'
-                }`}
-                style={{ scrollSnapAlign: 'start' }}
-              >
-                {hour}
-              </div>
-            ))}
+            <X size={20} className="text-gray-600 md:w-4 md:h-4" />
+          </button>
+        </div>
+        
+        <div className="flex items-center gap-3 md:gap-2 mb-4">
+          {/* Hours Wheel */}
+          <div className="flex-1">
+            <div className="text-xs text-gray-500 mb-2 md:mb-1 text-center">Hours</div>
+            <div 
+              ref={hoursRef}
+              className="border border-gray-300 rounded h-48 md:h-32 overflow-y-auto scroll-smooth" 
+              style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
+            >
+              {hourOptions.map((hour) => (
+                <div
+                  key={hour}
+                  onClick={() => setHours(hour)}
+                  className={`px-3 py-3 md:py-2 text-center cursor-pointer min-h-[48px] md:min-h-0 flex items-center justify-center ${
+                    hours === hour
+                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      : 'hover:bg-gray-50'
+                  }`}
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <span className="text-lg md:text-base">{hour}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Minutes Wheel */}
+          <div className="flex-1">
+            <div className="text-xs text-gray-500 mb-2 md:mb-1 text-center">Minutes</div>
+            <div 
+              ref={minutesRef}
+              className="border border-gray-300 rounded h-48 md:h-32 overflow-y-auto scroll-smooth" 
+              style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
+            >
+              {minuteOptions.map((min) => (
+                <div
+                  key={min}
+                  onClick={() => setMinutes(min)}
+                  className={`px-3 py-3 md:py-2 text-center cursor-pointer min-h-[48px] md:min-h-0 flex items-center justify-center ${
+                    minutes === min
+                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      : 'hover:bg-gray-50'
+                  }`}
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <span className="text-lg md:text-base">{min.toString().padStart(2, '0')}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* AM/PM Wheel */}
+          <div className="flex-1">
+            <div className="text-xs text-gray-500 mb-2 md:mb-1 text-center">Period</div>
+            <div 
+              ref={ampmRef}
+              className="border border-gray-300 rounded h-48 md:h-32 overflow-y-auto scroll-smooth" 
+              style={{ scrollSnapType: 'y mandatory', WebkitOverflowScrolling: 'touch' }}
+            >
+              {ampmOptions.map((period) => (
+                <div
+                  key={period}
+                  onClick={() => setAmpm(period)}
+                  className={`px-3 py-3 md:py-2 text-center cursor-pointer min-h-[48px] md:min-h-0 flex items-center justify-center ${
+                    ampm === period
+                      ? 'bg-blue-100 text-blue-700 font-medium'
+                      : 'hover:bg-gray-50'
+                  }`}
+                  style={{ scrollSnapAlign: 'start' }}
+                >
+                  <span className="text-lg md:text-base">{period}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Minutes Wheel */}
-        <div className="flex-1">
-          <div className="text-xs text-gray-500 mb-1 text-center">Minutes</div>
-          <div 
-            ref={minutesRef}
-            className="border border-gray-300 rounded h-32 overflow-y-auto scroll-smooth" 
-            style={{ scrollSnapType: 'y mandatory' }}
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 md:px-3 md:py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700 min-h-[44px] md:min-h-0"
           >
-            {minuteOptions.map((min) => (
-              <div
-                key={min}
-                onClick={() => setMinutes(min)}
-                className={`px-3 py-2 text-center cursor-pointer ${
-                  minutes === min
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'hover:bg-gray-50'
-                }`}
-                style={{ scrollSnapAlign: 'start' }}
-              >
-                {min.toString().padStart(2, '0')}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* AM/PM Wheel */}
-        <div className="flex-1">
-          <div className="text-xs text-gray-500 mb-1 text-center">Period</div>
-          <div 
-            ref={ampmRef}
-            className="border border-gray-300 rounded h-32 overflow-y-auto scroll-smooth" 
-            style={{ scrollSnapType: 'y mandatory' }}
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            className="flex-1 px-4 py-3 md:px-3 md:py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 min-h-[44px] md:min-h-0"
           >
-            {ampmOptions.map((period) => (
-              <div
-                key={period}
-                onClick={() => setAmpm(period)}
-                className={`px-3 py-2 text-center cursor-pointer ${
-                  ampm === period
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'hover:bg-gray-50'
-                }`}
-                style={{ scrollSnapAlign: 'start' }}
-              >
-                {period}
-              </div>
-            ))}
-          </div>
+            Confirm
+          </button>
         </div>
       </div>
-
-      <div className="flex gap-2">
-        <button
-          onClick={onClose}
-          className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 text-gray-700"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleConfirm}
-          className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Confirm
-        </button>
-      </div>
-    </div>
+    </>
   )
 }
 
